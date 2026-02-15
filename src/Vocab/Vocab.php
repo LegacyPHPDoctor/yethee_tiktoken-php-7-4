@@ -7,7 +7,6 @@ namespace Yethee\Tiktoken\Vocab;
 use Countable;
 use InvalidArgumentException;
 use OutOfBoundsException;
-use Override;
 use Yethee\Tiktoken\Exception\IOError;
 use Yethee\Tiktoken\Exception\ParseError;
 use Yethee\Tiktoken\Util\EncodeUtil;
@@ -26,7 +25,6 @@ use function implode;
 use function rewind;
 use function sprintf;
 use function stream_get_meta_data;
-use function strval;
 
 /** @psalm-import-type NonEmptyByteVector from EncodeUtil */
 final class Vocab implements Countable
@@ -42,7 +40,7 @@ final class Vocab implements Countable
     {
         $this->tokenToRankMap = $tokenRankMap;
         /** @psalm-suppress PropertyTypeCoercion */
-        $this->rankToTokenMap = array_map(strval(...), array_flip($tokenRankMap));
+        $this->rankToTokenMap = array_map(\Closure::fromCallable('strval'), array_flip($tokenRankMap));
 
         if (count($this->tokenToRankMap) !== count($this->rankToTokenMap)) {
             throw new InvalidArgumentException('The map of tokens and ranks has duplicates of rank');
@@ -112,7 +110,7 @@ final class Vocab implements Countable
         return new self($map);
     }
 
-    public function tryGetRank(string $binary): int|null
+    public function tryGetRank(string $binary): ?int
     {
         if ($binary === '') {
             throw new InvalidArgumentException('Argument $binary cannot be an empty string');
@@ -127,11 +125,13 @@ final class Vocab implements Countable
         if ($binary === '') {
             throw new InvalidArgumentException('Argument $binary cannot be an empty string');
         }
-
-        return $this->tokenToRankMap[$binary] ?? throw new OutOfBoundsException(sprintf(
-            'No rank for bytes vector: [%s]',
-            implode(', ', EncodeUtil::toBytes($binary)),
-        ));
+        if (!isset($this->tokenToRankMap[$binary])) {
+            throw new OutOfBoundsException(sprintf(
+                'No rank for bytes vector: [%s]',
+                implode(', ', EncodeUtil::toBytes($binary)),
+            ));
+        }
+        return $this->tokenToRankMap[$binary];
     }
 
     /**
@@ -141,11 +141,13 @@ final class Vocab implements Countable
      */
     public function getToken(int $rank): string
     {
-        return $this->rankToTokenMap[$rank] ?? throw new OutOfBoundsException(sprintf('No token for rank: %d', $rank));
+        if (!isset($this->rankToTokenMap[$rank])) {
+            throw new OutOfBoundsException(sprintf('No token for rank: %d', $rank));
+        }
+        return $this->rankToTokenMap[$rank];
     }
 
     /** @psalm-api */
-    #[Override]
     public function count(): int
     {
         return count($this->tokenToRankMap);

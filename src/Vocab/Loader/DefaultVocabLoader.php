@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Yethee\Tiktoken\Vocab\Loader;
 
-use Override;
 use Yethee\Tiktoken\Exception\IOError;
 use Yethee\Tiktoken\Vocab\Vocab;
 use Yethee\Tiktoken\Vocab\VocabLoader;
@@ -30,43 +29,41 @@ use const DIRECTORY_SEPARATOR;
 
 final class DefaultVocabLoader implements VocabLoader
 {
+    /**
+     * @var non-empty-string
+     * @readonly
+     */
+    private string $cacheDir;
     /** @param non-empty-string $cacheDir */
-    public function __construct(private readonly string $cacheDir)
+    public function __construct(string $cacheDir)
     {
+        $this->cacheDir = $cacheDir;
     }
 
-    #[Override]
-    public function load(string $uri, string|null $checksum = null): Vocab
+    public function load(string $uri, ?string $checksum = null): Vocab
     {
         return Vocab::fromFile($this->loadFile($uri, $checksum));
     }
 
-    #[Override]
-    public function loadFile(string $uri, string|null $checksum = null): string
+    public function loadFile(string $uri, ?string $checksum = null): string
     {
         $cacheFile = $this->cacheDir . DIRECTORY_SEPARATOR . sha1($uri);
-
         if (file_exists($cacheFile) && $this->checkHash($cacheFile, $checksum)) {
             return $cacheFile;
         }
-
         if (! is_dir($this->cacheDir) && ! @mkdir($this->cacheDir, 0750, true)) {
             throw new IOError(sprintf(
                 'Directory does not exist and cannot be created: %s',
                 $this->cacheDir,
             ));
         }
-
         if (! is_writable($this->cacheDir)) {
             throw new IOError(sprintf('Directory is not writable: %s', $this->cacheDir));
         }
-
         $stream = fopen($uri, 'r');
-
         if ($stream === false) {
             throw new IOError(sprintf('Could not open stream for URI: %s', $uri));
         }
-
         try {
             $cacheStream = fopen($cacheFile, 'w+');
 
@@ -100,12 +97,11 @@ final class DefaultVocabLoader implements VocabLoader
         } finally {
             fclose($stream);
         }
-
         return $cacheFile;
     }
 
     /** @param string|resource $resource */
-    private function checkHash($resource, string|null $expectedHash): bool
+    private function checkHash($resource, ?string $expectedHash): bool
     {
         if ($expectedHash === null) {
             return true;

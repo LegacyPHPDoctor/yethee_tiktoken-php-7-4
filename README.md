@@ -1,6 +1,10 @@
+# legacyphpdoctor/yethee_tiktoken-php-7-4
+
+⚠️ This repository is a PHP 7.4 compatible fork of [yethee/tiktoken](https://github.com/yethee/tiktoken).
+
 # tiktoken-php
 
-![Packagist Version](https://img.shields.io/packagist/v/yethee/tiktoken)
+![Packagist Version](https://img.shields.io/packagist/v/legacyphpdoctor/yethee_tiktoken-php-7-4)
 ![Build status](https://img.shields.io/github/actions/workflow/status/yethee/tiktoken-php/ci.yml?branch=master)
 ![Code Coverage](https://app.codacy.com/project/badge/Coverage/49ec3803b480478caeca8903b7ff0a69?branch=master)
 ![License](https://img.shields.io/github/license/yethee/tiktoken-php)
@@ -10,7 +14,7 @@ This is a port of the [tiktoken](https://github.com/openai/tiktoken).
 ## Installation
 
 ```bash
-$ composer require yethee/tiktoken
+$ composer require legacyphpdoctor/yethee_tiktoken-php-7-4
 ```
 
 ## Usage
@@ -113,3 +117,4 @@ composer bench
 ## License
 
 [MIT](./LICENSE)
+

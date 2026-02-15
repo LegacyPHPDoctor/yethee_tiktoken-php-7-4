@@ -17,15 +17,13 @@ final class EncoderProviderTest extends TestCase
     /**
      * @param non-empty-string $modelName
      * @param non-empty-string $encoding
+     * @dataProvider getEncoderForModelProvider
      */
-    #[DataProvider('getEncoderForModelProvider')]
     public function testGetEncoderForModel(string $modelName, string $encoding): void
     {
         $provider = new EncoderProvider();
         $provider->setVocabCache(dirname(__DIR__) . '/.cache/vocab');
-
         $encoder = $provider->getForModel($modelName);
-
         self::assertSame($encoding, $encoder->getEncoding());
     }
 

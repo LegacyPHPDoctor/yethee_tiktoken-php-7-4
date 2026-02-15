@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Yethee\Tiktoken\Encoder;
 
-use Override;
-use Stringable;
 use Yethee\Tiktoken\Encoder;
 use Yethee\Tiktoken\Exception\RegexError;
 use Yethee\Tiktoken\Util\EncodeUtil;
@@ -25,23 +23,33 @@ use function substr;
 use const PHP_INT_MAX;
 
 /** @psalm-import-type NonEmptyByteVector from EncodeUtil */
-final class NativeEncoder implements Encoder, Stringable
+final class NativeEncoder implements Encoder
 {
+    /**
+     * @var non-empty-string
+     */
+    private string $encoding;
+    private Vocab $vocab;
+    /**
+     * @var non-empty-string
+     */
+    private string $pattern;
     /**
      * @param non-empty-string $encoding
      * @param non-empty-string $pattern
      */
-    public function __construct(private string $encoding, private Vocab $vocab, private string $pattern)
+    public function __construct(string $encoding, Vocab $vocab, string $pattern)
     {
+        $this->encoding = $encoding;
+        $this->vocab = $vocab;
+        $this->pattern = $pattern;
     }
 
-    #[Override]
     public function __toString(): string
     {
         return sprintf('NativeEncoder(encoding="%s", vocab=%d)', $this->encoding, count($this->vocab));
     }
 
-    #[Override]
     public function getEncoding(): string
     {
         return $this->encoding;
@@ -50,19 +58,15 @@ final class NativeEncoder implements Encoder, Stringable
     /**
      * {@inheritDoc}
      */
-    #[Override]
     public function encode(string $text): array
     {
         if ($text === '') {
             return [];
         }
-
         if (preg_match_all($this->pattern, $text, $matches) === false) {
             throw new RegexError(sprintf('Matching failed with error: %s', preg_last_error_msg()));
         }
-
         $tokens = [];
-
         foreach ($matches[0] as $match) {
             if ($match === '') {
                 continue;
@@ -80,27 +84,22 @@ final class NativeEncoder implements Encoder, Stringable
                 $tokens[] = $rank;
             }
         }
-
         return $tokens;
     }
 
     /**
      * {@inheritDoc}
      */
-    #[Override]
     public function encodeInChunks(string $text, int $maxTokensPerChunk): array
     {
         if ($text === '') {
             return [];
         }
-
         if (preg_match_all($this->pattern, $text, $matches) === false) {
             throw new RegexError(sprintf('Matching failed with error: %s', preg_last_error_msg()));
         }
-
         $chunks = [];
         $tokensInCurrentChunk = [];
-
         foreach ($matches[0] as $match) {
             if ($match === '') {
                 continue;
@@ -116,25 +115,21 @@ final class NativeEncoder implements Encoder, Stringable
 
             $tokensInCurrentChunk = array_merge($tokensInCurrentChunk, $tokens);
         }
-
         if (count($tokensInCurrentChunk) > 0) {
             $chunks[] = $tokensInCurrentChunk;
         }
-
         return $chunks;
     }
 
     /**
      * {@inheritDoc}
      */
-    #[Override]
     public function decode(array $tokens): string
     {
         if ($tokens === []) {
             return '';
         }
-
-        return implode(array_map($this->vocab->getToken(...), $tokens));
+        return implode(array_map(\Closure::fromCallable([$this->vocab, 'getToken']), $tokens));
     }
 
     /**
@@ -158,7 +153,7 @@ final class NativeEncoder implements Encoder, Stringable
             $offset = $parts[$startIndex][0];
             $length = $parts[$startIndex + $skip + 2][0] - $offset;
 
-            return $this->vocab->tryGetRank(substr($piece, $offset, $length)) ?? PHP_INT_MAX;
+            return $this->vocab->tryGetRank((string) substr($piece, $offset, $length)) ?? PHP_INT_MAX;
         };
 
         for ($i = 0; $i < count($parts) - 2; $i++) {
@@ -201,7 +196,7 @@ final class NativeEncoder implements Encoder, Stringable
             $offset = $parts[$i][0];
             $length = $parts[$i + 1][0] - $offset;
 
-            $res[] = $this->vocab->getRank(substr($piece, $offset, $length));
+            $res[] = $this->vocab->getRank((string) substr($piece, $offset, $length));
         }
 
         return $res;

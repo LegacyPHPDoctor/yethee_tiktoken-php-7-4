@@ -6,7 +6,6 @@ namespace Yethee\Tiktoken;
 
 use FFI;
 use InvalidArgumentException;
-use Override;
 use RuntimeException;
 use Symfony\Contracts\Service\ResetInterface;
 use Yethee\Tiktoken\Encoder\LibEncoder;
@@ -18,13 +17,13 @@ use Yethee\Tiktoken\Vocab\VocabLoader;
 use function class_exists;
 use function getenv;
 use function sprintf;
-use function str_starts_with;
 use function sys_get_temp_dir;
 
 use const DIRECTORY_SEPARATOR;
 
 final class EncoderProvider implements ResetInterface
 {
+    private bool $useLib = false;
     public const ENCODINGS = [
         'r50k_base' => [
             'vocab' => 'https://openaipublic.blob.core.windows.net/encodings/r50k_base.tiktoken',
@@ -114,7 +113,10 @@ final class EncoderProvider implements ResetInterface
         'code-search-ada-code-001' => 'r50k_base',
     ];
 
-    private VocabLoader|null $vocabLoader = null;
+    /**
+     * @var \Yethee\Tiktoken\Vocab\VocabLoader|null
+     */
+    private $vocabLoader = null;
 
     /** @var non-empty-string */
     private string $vocabCacheDir;
@@ -125,8 +127,9 @@ final class EncoderProvider implements ResetInterface
     /** @var array<string, Vocab> */
     private array $vocabs = [];
 
-    public function __construct(private bool $useLib = false)
+    public function __construct(bool $useLib = false)
     {
+        $this->useLib = $useLib;
         if ($useLib && ! class_exists(FFI::class)) {
             throw new RuntimeException('Required FFI extension is not loaded');
         }
@@ -148,7 +151,7 @@ final class EncoderProvider implements ResetInterface
         }
 
         foreach (self::MODEL_PREFIX_TO_ENCODING as $prefix => $modelEncoding) {
-            if (str_starts_with($model, $prefix)) {
+            if (strncmp($model, $prefix, strlen($prefix)) === 0) {
                 return $this->get($modelEncoding);
             }
         }
@@ -193,7 +196,6 @@ final class EncoderProvider implements ResetInterface
         $this->vocabLoader = $loader;
     }
 
-    #[Override]
     public function reset(): void
     {
         $this->encoders = [];

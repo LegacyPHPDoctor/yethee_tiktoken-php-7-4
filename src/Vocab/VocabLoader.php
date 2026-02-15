@@ -13,7 +13,7 @@ interface VocabLoader
      *
      * @throws IOError
      */
-    public function load(string $uri, string|null $checksum = null): Vocab;
+    public function load(string $uri, ?string $checksum = null): Vocab;
 
     /**
      * @param non-empty-string $uri
@@ -22,5 +22,5 @@ interface VocabLoader
      *
      * @throws IOError
      */
-    public function loadFile(string $uri, string|null $checksum = null): string;
+    public function loadFile(string $uri, ?string $checksum = null): string;
 }

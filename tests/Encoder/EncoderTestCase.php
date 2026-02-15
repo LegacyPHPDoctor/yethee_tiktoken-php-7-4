@@ -13,24 +13,22 @@ abstract class EncoderTestCase extends TestCase
     /**
      * @param non-empty-string $encoding
      * @param list<int>        $tokens
+     * @dataProvider provideDataForFlatTokenization
      */
-    #[DataProvider('provideDataForFlatTokenization')]
     public function testEncode(string $text, string $encoding, array $tokens): void
     {
         $encoder = $this->getEncoder($encoding);
-
         self::assertSame($tokens, $encoder->encode($text));
     }
 
     /**
      * @param non-empty-string $encoding
      * @param list<int>        $tokens
+     * @dataProvider provideDataForFlatTokenization
      */
-    #[DataProvider('provideDataForFlatTokenization')]
     public function testDecode(string $text, string $encoding, array $tokens): void
     {
         $encoder = $this->getEncoder($encoding);
-
         self::assertSame($text, $encoder->decode($tokens));
     }
 
@@ -38,12 +36,11 @@ abstract class EncoderTestCase extends TestCase
      * @param non-empty-string $encoding
      * @param positive-int     $maxTokensPerChunk
      * @param list<list<int>>  $expected
+     * @dataProvider provideDataForChunkBasedTokenization
      */
-    #[DataProvider('provideDataForChunkBasedTokenization')]
     public function testEncodeInChunks(string $encoding, string $text, int $maxTokensPerChunk, array $expected): void
     {
         $encoder = $this->getEncoder($encoding);
-
         self::assertSame($expected, $encoder->encodeInChunks($text, $maxTokensPerChunk));
     }
 
